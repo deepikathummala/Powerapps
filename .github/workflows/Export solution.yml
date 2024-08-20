@@ -1,16 +1,16 @@
-name: export-and-branch-solution
+name: export-and-store-solution
 # Export solution from DEV environment
-#  unpack it and prepare, commit and push a git branch with the changes
+# Unpack it and store as an artifact
 
 on:
   workflow_dispatch:
     inputs:
       # Change this value
       solution_name: 
-        description: 'name of the solution to worked on from Power Platform'
+        description: 'name of the solution to work on from Power Platform'
         required: true
         default: dev_sol
-       #Do Not change these values
+      # Do Not change these values
       solution_exported_folder:
         description: 'folder name for staging the exported solution *do not change*'
         required: true
@@ -20,11 +20,11 @@ on:
         required: true
         default: out/solutions/
       solution_target_folder: 
-       description: 'folder name to be created and checked in *do not change*'
-       required: true
-       default: solutions/
+        description: 'folder name to be created and checked in *do not change*'
+        required: true
+        default: solutions/
 env:
-#edit your values here
+  # Edit your values here
   ENVIRONMENT_URL: 'https://orgb2838d04.crm8.dynamics.com'
   CLIENT_ID: '56c05d4d-4993-462c-918d-5d330f2c1106'
   TENANT_ID: '2186f566-2dc1-44e4-bec4-67814bcbd96b'
@@ -50,7 +50,6 @@ jobs:
         client-secret: ${{ secrets.PowerPlatformSPN }}
         tenant-id: ${{env.TENANT_ID}}
 
-
     - name: export-solution action
       uses: microsoft/powerplatform-actions/export-solution@v0
       with:
@@ -69,10 +68,8 @@ jobs:
         solution-type: 'Unmanaged'
         overwrite-files: true
 
-    - name: branch-solution, prepare it for a PullRequest
-      uses: microsoft/powerplatform-actions/branch-solution@v0
+    - name: Upload solution as artifact
+      uses: actions/upload-artifact@v2
       with:
-        solution-folder: ${{ github.event.inputs.solution_folder}}/${{ github.event.inputs.solution_name }}
-        solution-target-folder: ${{ github.event.inputs.solution_target_folder}}/${{ github.event.inputs.solution_name }}
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        allow-empty-commit: true
+        name: exportedSolution
+        path: ${{ github.event.inputs.solution_exported_folder}}/
