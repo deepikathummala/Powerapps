@@ -1,25 +1,55 @@
-name: Release action
-# Call the reusable workflow release-solution-with-inputs.yml
-# Release your solution to prod when you create a new release.
- 
+name: release-solution-to-prod-reusable
+# Reusable workflow
+# convert solution to managed (using a build PowerPlatform environment for the conversion)
+# upload the solution to the GitHub artifacts and deploy to the PROD environment
 on:
-  release:
-      types: [created]        
-permissions:
-  contents: write
-jobs:
-  Release-solution-ALMLab:
-    uses: ${{ github.event.inputs.solution_exported_folder}}/exportedSolution
-    with:
-      #You can specify the solution name here
-      solution_name: dev_sol
-      #Update your values here
-      BUILD_ENVIRONMENT_URL: 'https://org70923278.crm8.dynamics.com/'
-      PRODUCTION_ENVIRONMENT_URL:  'https://org2658f4e7.crm8.dynamics.com/'
-      CLIENT_ID: '227a6a7e-3558-47d4-babb-8a7372d45806'
-      TENANT_ID: '2186f566-2dc1-44e4-bec4-67814bcbd96b'      
+  workflow_call:
+    inputs: 
+      #Do Not change these values
+      #Values are set by the caller
+      #caller sample: release-action-call.ymnl
+      solution_name:
+        description: 'The solution name.'
+        type: string
+        default: dev_sol      
+      solution_shipping_folder:
+        description: 'folder name for staging the exported solution *do not change*'        
+        type: string
+        default: out/ship/
+      solution_outbound_folder:
+        description: 'staging the unpacked solution folder before check-in *do not change*'
+        type: string
+        default: out/solutions/
+      solution_source_folder: 
+       description: 'folder name to be created and checked in *do not change*'
+       type: string
+       default: solutions/
+      solution_release_folder:
+       description: 'folder where the released binaries are going to be hosted *do not change*'
+       type: string
+       default: out/release
+      BUILD_ENVIRONMENT_URL:
+        description: 'Build environment url.'
+        type: string
+        required: true      
+      PRODUCTION_ENVIRONMENT_URL: 
+        description: 'Production environment url.'
+        type: string
+        required: true
+      CLIENT_ID: 
+        description: 'The client id'
+        type: string
+        required: true
+      TENANT_ID: 
+        description: 'The tenant id'
+        type: string
+        required: true
     secrets:
-      envSecret: ${{ secrets.PowerPlatformSPN }}
+      envSecret:
+        description: 'The secret value for authentication using SPN'
+        required: true
+ 
+jobs:
   convert-to-managed:
     runs-on: windows-latest
     # or you can say runs-on: ubuntu-latest
