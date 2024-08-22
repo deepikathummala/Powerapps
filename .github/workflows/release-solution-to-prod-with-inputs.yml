@@ -1,70 +1,94 @@
 name: Release action
-
+# Call the reusable workflow release-solution-with-inputs.yml
 # Release your solution to prod when you create a new release.
+ 
 on:
   release:
-    types: [created]
-
+      types: [created]        
 permissions:
   contents: write
-
 jobs:
   Release-solution-ALMLab:
+    uses: ${{ github.event.inputs.solution_exported_folder}}/exportedSolution
+    with:
+      #You can specify the solution name here
+      solution_name: dev_sol
+      #Update your values here
+      BUILD_ENVIRONMENT_URL: 'https://org70923278.crm8.dynamics.com/'
+      PRODUCTION_ENVIRONMENT_URL:  'https://org2658f4e7.crm8.dynamics.com/'
+      CLIENT_ID: '227a6a7e-3558-47d4-babb-8a7372d45806'
+      TENANT_ID: '2186f566-2dc1-44e4-bec4-67814bcbd96b'      
+    secrets:
+      envSecret: ${{ secrets.PowerPlatformSPN }}
+  convert-to-managed:
     runs-on: windows-latest
+    # or you can say runs-on: ubuntu-latest
     env:
       RUNNER_DEBUG: 1
+ 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-
-      - name: Pack solution
-        uses: microsoft/powerplatform-actions/pack-solution@v0
-        with:
-          solution-folder: solutions/dev_sol
-          solution-file: out/solutions/dev_sol.zip
-          solution-type: Unmanaged
-
-      - name: Export solution as managed
-        uses: microsoft/powerplatform-actions/export-solution@v0
-        with:
-          environment-url: 'https://orgb2838d04.crm8.dynamics.com'
-          app-id: '227a6a7e-3558-47d4-babb-8a7372d45806'
-          client-secret: ${{ secrets.PowerPlatformSPN }}
-          tenant-id: '2186f566-2dc1-44e4-bec4-67814bcbd96b'
-          solution-name: dev_sol
-          managed: true
-          solution-output-file: out/ship/dev_sol_managed.zip
-
-      - name: Upload the ready to ship solution to GH artifact store
-        uses: actions/upload-artifact@v2
-        with:
-          name: managedSolutions
-          path: out/ship/
-
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+ 
+    - name: Pack solution
+      uses: microsoft/powerplatform-actions/pack-solution@v0
+      with:
+        solution-folder: ${{ inputs.solution_source_folder}}/${{ inputs.solution_name }}
+        solution-file: ${{ inputs.solution_outbound_folder}}/${{ inputs.solution_name }}.zip
+        solution-type: Unmanaged
+ 
+   # - name: Import solution as unmanaged to build env
+       #uses: microsoft/powerplatform-actions/import-solution@v0
+      # with:
+        #environment-url: ${{inputs.BUILD_ENVIRONMENT_URL}}
+        #app-id: ${{inputs.CLIENT_ID}}
+        #client-secret: ${{ secrets.envSecret }}
+        #tenant-id: ${{inputs.TENANT_ID}}
+        #solution-file: ${{ inputs.solution_outbound_folder}}/${{ inputs.solution_name }}.zip
+        #force-overwrite: true
+        #publish-changes: true
+ 
+    - name: Export solution as managed
+      uses: microsoft/powerplatform-actions/export-solution@v0
+      with:
+        environment-url: ${{inputs.BUILD_ENVIRONMENT_URL}}
+        app-id: ${{inputs.CLIENT_ID}}
+        client-secret: ${{ secrets.envSecret }} 
+        tenant-id: ${{inputs.TENANT_ID}}
+        solution-name: ${{ inputs.solution_name }}
+        managed: true
+        solution-output-file: ${{ inputs.solution_shipping_folder}}/${{ inputs.solution_name }}_managed.zip
+ 
+    - name: Upload the ready to ship solution to GH artifact store
+      uses: actions/upload-artifact@v2
+      with:
+        name: managedSolutions
+        path: ${{ inputs.solution_shipping_folder}}/
+ 
   release-to-staging:
-    needs: [Release-solution-ALMLab]
+    needs: [ convert-to-managed ]
     runs-on: windows-latest
     env:
       RUNNER_DEBUG: 1
+ 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-
-      - name: Fetch the ready to ship solution from GH artifact store
-        uses: actions/download-artifact@v2
-        with:
-          name: managedSolutions
-          path: out/release
-
-      - name: Import solution to prod env
-        uses: microsoft/powerplatform-actions/import-solution@v0
-        with:
-          environment-url: 'https://org2658f4e7.crm8.dynamics.com'
-          app-id: '227a6a7e-3558-47d4-babb-8a7372d45806'
-          client-secret: ${{ secrets.PowerPlatformSPN }}
-          tenant-id: '2186f566-2dc1-44e4-bec4-67814bcbd96b'
-          solution-file: out/release/dev_sol_managed.zip
-          force-overwrite: true
-          publish-changes: true
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+ 
+    - name: Fetch the ready to ship solution from GH artifact store
+      uses: actions/download-artifact@v2
+      with:
+        name: managedSolutions
+        path: ${{ inputs.solution_release_folder}}
+    - name: Import solution to prod env
+      uses: microsoft/powerplatform-actions/import-solution@v0
+      with:
+        environment-url: ${{inputs.PRODUCTION_ENVIRONMENT_URL}}
+        app-id: ${{inputs.CLIENT_ID}}
+        client-secret: ${{ secrets.envSecret }}
+        tenant-id: ${{inputs.TENANT_ID}}
+        solution-file: ${{ inputs.solution_release_folder}}/${{ inputs.solution_name }}_managed.zip
+        force-overwrite: true
+        publish-changes: true
