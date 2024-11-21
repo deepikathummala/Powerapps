@@ -1,0 +1,105 @@
+name: export
+on:
+  workflow_dispatch:
+   inputs:
+     solution_names:
+       description: 'solution names'
+       required: true
+       type: string
+       default: '["solution1","solution2"]'
+       
+     source_env:
+         description: 'source env names'
+         type: choice
+         required: true
+         options:
+           - Dev
+           - Test
+            - UAT
+            - Prod
+         default: 'Dev'
+     solution_exported_folder:
+         description: 'folder name for staging the exported solution *do not change*'
+         required: true
+         default: out/export
+     solution_folder:
+        description: 'staging the unpacked solution folder before check-in *do not change*'
+        required: true
+        default: solutions
+     manage-type:
+         description: "Managed"
+         type: choice
+         required: true
+         options:
+           - true
+            - false
+             
+         default: true
+  release:
+       types: [created]
+permissions:
+    contents: write
+jobs:
+  export:
+      strategy:
+        max-parallel: 1
+        matrix: 
+          solution_names: ${{ fromJSON(github.event.inputs.solution_names) }}
+      runs-on: windows-latest
+      environment:
+         name: ${{ github.event.inputs.source_env}}
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          Ifs: true
+      - name: Install Power platform tools
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
+      - name: who-am-i action
+        uses: microsoft/powerplatform-actions/who-am-i@v0
+        with:
+           environment-url: ${{secrets.ENVIRONMENT_URL}}
+           app-id:  ${{ secrets.CLIENT_ID}}
+           client-secret: ${{ secrets.PowerPlatformSPN }}
+           tenant-id: ${{ secrets.TENANT_ID}}
+      - name: Export solution as managed
+        uses: microsoft/powerplatform-actions/export-solution@v0
+        with:
+            environment-url: ${{env.BUILD_ENVIRONMENT_URL}}
+            app-id:  ${{ secrets.CLIENT_ID}}
+            client-secret: ${{ secrets.PowerPlatformSPN }}
+            tenant-id: ${{ secrets.TENANT_ID}}
+            solution-name: ${{ github.event.inputs.solution_name }}
+            managed: ${{github.event,inputs.manage_type }}
+            solution-output-file: ${{ inputs.solution_exported_folder}}/${{matrix.solution_names}}.zip
+      - name: unpack-solution action
+        uses: microsoft/powerplatform-actions/unpack-solution@v0
+        with:
+            solution-file: ${{inputs.solution_exported_folder}}/${{ matrix.solution_names}}.zip
+            solution-folder: ${{ github.event.inputs.solution_folder}}/${{ matrix.solution_names }}
+            solution-type: 'Managed'
+            overwrite-files: true
+      - name: Git Fetch and commit
+        run: |
+           git fetch origin
+           git config --global user.email "thummaladeepika@gmail.com
+           git config --global user.name "deepikathummala"
+           git checkout Development
+           git merge origin/Development
+           git add --all
+           git commit -m "Commit unpacked solutions into Development branch"
+           git remote set -url origin https://x-access-token:${{ secrets.GITHUB_TOKEN}}@github.com/${{github.repository }}
+           
+      - name: Upload solution as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exportedSolution
+          path: ${{ inputs.solution_exported_folder}}/*.zip
+           
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+           name: exportedSolution
+           path: ${{ inputs.solution_exported_folder}}
+            
+      
