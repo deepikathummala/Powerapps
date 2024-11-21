@@ -96,7 +96,7 @@ jobs:
           path: ${{ inputs.solution_exported_folder}}/*.zip
            
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
            name: exportedSolution
            path: ${{ inputs.solution_exported_folder}}
