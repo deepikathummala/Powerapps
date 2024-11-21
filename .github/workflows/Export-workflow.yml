@@ -6,7 +6,7 @@ on:
        description: 'solution names'
        required: true
        type: string
-       default: '["Dev_Sol","solution"]'
+       default: '["Dev_SolClone","solution"]'
        
      source_env:
          description: 'source env names'
