@@ -69,7 +69,7 @@ jobs:
             client-secret: ${{ secrets.PowerPlatformSPN }}
             tenant-id: ${{ secrets.TENANT_ID}}
             solution-name: ${{ github.event.inputs.solution_name }}
-            managed: ${{github.event,inputs.manage_type }}
+            managed: ${{github.event.inputs.manage_type }}
             solution-output-file: ${{ inputs.solution_exported_folder}}/${{matrix.solution_names}}.zip
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0
