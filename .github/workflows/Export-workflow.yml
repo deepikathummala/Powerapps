@@ -58,7 +58,7 @@ jobs:
         uses: microsoft/powerplatform-actions/who-am-i@v0
         with:
            environment-url: ${{secrets.ENVIRONMENT_URL}}
-           app-id:  ${{ env.secrets.CLIENT_ID}}
+           app-id:  ${{ secrets.CLIENT_ID}}
            client-secret: ${{ secrets.PowerPlatformSPN }}
            tenant-id: ${{ secrets.TENANT_ID}}
       - name: Export solution as managed
