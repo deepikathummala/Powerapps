@@ -13,10 +13,10 @@ on:
          type: choice
          required: true
          options:
-           - Dev
-           - Test
-            - UAT
-            - Prod
+          - Dev
+          - Test
+          - UAT
+          - Prod
          default: 'Dev'
      solution_exported_folder:
          description: 'folder name for staging the exported solution *do not change*'
@@ -31,9 +31,8 @@ on:
          type: choice
          required: true
          options:
-           - true
-            - false
-             
+          - true
+           - false     
          default: true
   release:
        types: [created]
