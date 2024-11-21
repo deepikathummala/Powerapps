@@ -29,7 +29,10 @@ on:
      manage-type:
          description: "Managed"
          type: choice
-         required: false
+         options:
+          - true
+          - false
+         required: true
          default: true
   release:
        types: [created]
