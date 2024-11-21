@@ -1,0 +1,32 @@
+name: import-multiple-solutions
+on:
+  release:
+     types: [published]
+  workflow_dispatch:
+    inputs:
+      solution_names:
+        description: 'solution names'
+        type: string
+        required: true
+        default: '["solution1","solution2"]'
+jobs:
+     build:
+       strategy:
+          max-parallel: 1
+          matrix:
+            solution_name: ${{ fromJSON(github.event.inputs.solution_names) }}
+       runs-on: ubuntu-latest
+       steps:
+          - uses: actions/checkout@v4
+          - name: 'Run a script'
+            run: echo hello
+     release:
+         strategy:
+          max-parallel: 1
+          matrix:
+            solution_name: ${{ fromJSON(github.event.inputs.solution_names) }}
+         runs-on: ubuntu-latest
+         steps:
+          - uses: actions/checkout@v4
+          - name: 'print solution'
+            run: echo "${{ matrix.solution_name }}"
