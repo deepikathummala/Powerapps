@@ -1,4 +1,4 @@
-name: import-multiple-solutions
+name: matrix-multiple-solutions
 on:
   release:
      types: [published]
