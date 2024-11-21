@@ -57,17 +57,17 @@ jobs:
       - name: who-am-i action
         uses: microsoft/powerplatform-actions/who-am-i@v0
         with:
-           environment-url: ${{secrets.ENVIRONMENT_URL}}
-           app-id:  ${{ secrets.CLIENT_ID}}
-           client-secret: ${{ secrets.PowerPlatformSPN }}
-           tenant-id: ${{ secrets.TENANT_ID}}
+           environment-url: ${{env.secrets.ENVIRONMENT_URL}}
+           app-id:  ${{ env.secrets.CLIENT_ID}}
+           client-secret: ${{ env.secrets.PowerPlatformSPN }}
+           tenant-id: ${{ env.secrets.TENANT_ID}}
       - name: Export solution as managed
         uses: microsoft/powerplatform-actions/export-solution@v0
         with:
-            environment-url: ${{env.BUILD_ENVIRONMENT_URL}}
-            app-id:  ${{ secrets.CLIENT_ID}}
-            client-secret: ${{ secrets.PowerPlatformSPN }}
-            tenant-id: ${{ secrets.TENANT_ID}}
+            environment-url: ${{env.ENVIRONMENT_URL}}
+            app-id:  ${{ env.secrets.CLIENT_ID}}
+            client-secret: ${{ env.secrets.PowerPlatformSPN }}
+            tenant-id: ${{ env.secrets.TENANT_ID}}
             solution-name: ${{ github.event.inputs.solution_name }}
             managed: ${{github.event.inputs.manage_type }}
             solution-output-file: ${{ inputs.solution_exported_folder}}/${{matrix.solution_names}}.zip
