@@ -11,7 +11,7 @@ on:
       solution_name:
         description: 'The solution name.'
         type: string
-        default: solution     
+        default: dev_sol    
       solution_shipping_folder:
         description: 'folder name for staging the exported solution *do not change*'        
         type: string
