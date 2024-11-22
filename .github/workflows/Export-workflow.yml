@@ -79,16 +79,6 @@ jobs:
             solution-folder: ${{ github.event.inputs.solution_folder}}/${{ matrix.solution_names }}
             solution-type: 'Unmanaged'
             overwrite-files: false
-      - name: Git Fetch and commit
-        run: |
-           git fetch origin
-           git config --global user.email "thummaladeepika@gmail.com
-           git config --global user.name "deepikathummala"
-           git checkout main
-           git merge origin/main
-           git add --all
-           git commit -m "Commit unpacked solutions into Development branch"
-           git remote set -url origin https://x-access-token:${{ secrets.GITHUB_TOKEN}}@github.com/${{github.repository }}
            
       - name: Upload solution as artifact
         uses: actions/upload-artifact@v4
