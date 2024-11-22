@@ -8,15 +8,15 @@ on:
 permissions:
   contents: write
 jobs:
-  Release-solution-ALMLab:
+  Release-solution:
     uses: deepikathummala/Powerapps/.github/workflows/release-solution-to-prod-with-inputs.yml@main
     with:
       #You can specify the solution name here
-      solution_name: dev_sol
+      solution_name: solution
       #Update your values here
-      BUILD_ENVIRONMENT_URL: 'https://orgb2838d04.crm8.dynamics.com'
+      BUILD_ENVIRONMENT_URL: ${{ secrets.ENVIRONMENT_URL}}
       PRODUCTION_ENVIRONMENT_URL:  'https://org2658f4e7.crm8.dynamics.com'
-      CLIENT_ID: '56c05d4d-4993-462c-918d-5d330f2c1106'
-      TENANT_ID: '2186f566-2dc1-44e4-bec4-67814bcbd96b'      
+      CLIENT_ID: ${{ secrets. CLIENT_ID}}
+      TENANT_ID: ${{ secrets.TENANT_ID}}     
     secrets:
       envSecret: ${{ secrets.PowerPlatformSPN }}
