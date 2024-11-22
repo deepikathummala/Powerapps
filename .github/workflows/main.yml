@@ -15,7 +15,7 @@ jobs:
       solution_name: solution
       #Update your values here
       BUILD_ENVIRONMENT_URL: ${{ secrets.ENVIRONMENT_URL}}
-      PRODUCTION_ENVIRONMENT_URL:  'https://org2658f4e7.crm8.dynamics.com'
+      PRODUCTION_ENVIRONMENT_URL: ${{ secrets.DESTINATION_URL}}
       CLIENT_ID: ${{ secrets. CLIENT_ID}}
       TENANT_ID: ${{ secrets.TENANT_ID}}     
     secrets:
