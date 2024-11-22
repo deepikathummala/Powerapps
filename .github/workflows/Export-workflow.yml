@@ -77,7 +77,7 @@ jobs:
         with:
             solution-file: ${{inputs.solution_exported_folder}}/${{ matrix.solution_names}}.zip
             solution-folder: ${{ github.event.inputs.solution_folder}}/${{ matrix.solution_names }}
-            solution-type: 'Managed'
+            solution-type: 'Unmanaged'
             overwrite-files: false
       - name: Git Fetch and commit
         run: |
