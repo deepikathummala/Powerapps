@@ -1,0 +1,61 @@
+name: caller-workflow
+on:
+  workflow_dispatch:
+    inputs:
+      solution_names:
+        description: "solution names"
+        required: true
+        type: string
+        default: '[ "solution"]'
+      solution_type:
+       description: "type Managed and Unmanaged"
+       type: choice
+       required: true
+       options:
+        - Managed
+        - Unmanaged
+      target_env:
+       description: "target env"
+       type: choice
+       required: true
+       options:
+         - Test
+         - UAT
+         - PROD
+      deployment_type:
+        description: "Update or Upgrade"
+        type: choice
+        required: true
+        options:
+         - Update
+         - Upgrade
+      run_asynchronously:
+         description: "Import solution asynchronously"
+         type: choice
+         required: true
+         options:
+           - true
+           - false
+      async_timeout:
+         description: "Max"
+         required: true
+         type: string
+         default: '60'
+permissions:
+        contents: write
+        pull-requests: write
+jobs:
+    reusable_workflow:
+       uses: ./.github/workflows/Import-Reusable.yml
+       with:
+         target_env: ${{ secrets.ENVIRONMENT_URL }}
+         solution_names: ${{ github.event.input.solution_name}}
+         #target_env: ${{ github.event.inputs.target_env}}
+         deployment_type: ${{ github.event.inputs.deploymeny_type}}
+         async_deployment: ${{ github.event.inputs.run_asynchronously}}
+         async_timeout: ${{ github.event.inputs.async_timeout}}
+         solution_type: ${{ inputs.solution_type}}
+        # target_env: ${{ secrets.ENVIRONMENT_URL }}
+         app-id:  ${{ secrets.CLIENT_ID }}
+         client-secret: ${{ secrets.PowerPlatformSPN }}
+         tenant-id: ${{ secrets.TENANT_ID }}
