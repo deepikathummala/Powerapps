@@ -26,6 +26,19 @@ on:
         description: 'maximum await time in minutes'
         required: true
         type: string
+    secrets:
+      target_env:
+              description: 'target env'
+              required: true
+      client_secret:
+                 description: 'max'
+                 required: true
+      client_id:
+                  description: 'max'
+                  required: true
+      tenent_id:
+                 description: 'max'
+                 required: true
 
 permissions:
   contents: write
