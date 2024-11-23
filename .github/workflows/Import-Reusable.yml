@@ -35,12 +35,12 @@ env:
        release_folder: out/release
        solution_folder: solutions
 jobs:
-      import:
+   import:
          strategy:
            max-parallel: 1
            matrix:
                solution_name: ["solution1","solution2"]
-      runs-on: windows-latest
+   runs-on: windows-latest
       environment:
              name: ${{ github.event.inputs,target_env}}
       steps:
