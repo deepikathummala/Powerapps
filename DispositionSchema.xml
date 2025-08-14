@@ -1,0 +1,16 @@
+<entities >
+  <entity name="cu_disposition" displayname="Disposition" etc="11178" primaryidfield="cu_dispositionid" primarynamefield="cu_name" disableplugins="true">
+    <fields>
+      <field displayname="Area" name="cu_area" type="string" customfield="true" />
+      <field updateCompare="true" displayname="Disposition" name="cu_dispositionid" type="guid" primaryKey="true" />
+      <field displayname="Disposition Subject" name="cu_name" type="string" customfield="true" />
+      <field displayname="Heading" name="cu_heading" type="string" customfield="true" />
+      <field displayname="Owner" name="ownerid" type="owner" />
+      <field displayname="Owning Business Unit" name="owningbusinessunit" type="entityreference" lookupType="businessunit" />
+      <field displayname="Owning Team" name="owningteam" type="entityreference" lookupType="team" />
+      <field displayname="Owning User" name="owninguser" type="entityreference" lookupType="systemuser" />
+      <field displayname="Status" name="statecode" type="state" />
+      <field displayname="Status Reason" name="statuscode" type="status" />
+    </fields>
+  </entity>
+</entities>
