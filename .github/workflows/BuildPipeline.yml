@@ -20,7 +20,7 @@ on:
         type: boolean
 
 jobs:
-  export:
+  export-solution:
     runs-on: windows-latest
     environment: ${{ inputs.source_environments }}
     timeout-minutes: 0  # Note: GitHub has a 6-hour limit for jobs
@@ -80,7 +80,7 @@ jobs:
           user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
           password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
           solution-name: ${{ matrix.solution }}
-          solution-version: ${{ env.SolutionVersion }}
+          solution-version: $env:SolutionVersion
 
       - uses: microsoft/powerplatform-actions/export-solution@v1
         with:
