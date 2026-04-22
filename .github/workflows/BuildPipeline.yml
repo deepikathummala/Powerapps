@@ -11,7 +11,7 @@ on:
       solutions:
         description: 'Solutions (JSON array, e.g., ["MPDFirearmsStabilizationCore"])'
         required: true
-        default: '["MPDFirearmsStabilizationCore"]'
+        default: '["Sprint1_Solution_Shailaja"]'
         type: string
       update_build_version:
         description: 'Update Build Version'
@@ -103,7 +103,7 @@ jobs:
           async: true
           max-async-wait-time: 60
 
-      - uses: microsoft/powerplatform-actions/check-solutio@v1
+      - uses: microsoft/powerplatform-actions/check-solution@v1
         with:
           environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
           user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
