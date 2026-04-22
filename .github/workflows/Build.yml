@@ -52,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           $buildChange = [System.Convert]::ToBoolean("${{ inputs.update_build_version }}")
-          "BUILD_CHANGE=$buildChange" >> $env:GITHUB_ENV
+          # "BUILD_CHANGE=$buildChange" >> $env:GITHUB_ENV
 
       - name: Update Solution Version (if enabled)
         if: inputs.update_build_version == true
@@ -61,14 +61,14 @@ jobs:
           & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 `
             -SolutionName "${{ matrix.solution }}" `
             -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
-            -BuildVersionChange $env:BUILD_CHANGE
+            -BuildVersionChange "$buildChange"
 
-      - name: Capture Solution Version (if update enabled)
-        if: inputs.update_build_version == true
-        shell: pwsh
-        run: |
-          $version = Get-Content 'version.txt'
-          "SolutionVersion=$version" >> $env:GITHUB_ENV
+      # - name: Capture Solution Version (if update enabled)
+      #   if: inputs.update_build_version == true
+      #   shell: pwsh
+      #   run: |
+      #     $version = Get-Content 'version.txt'
+      #     "SolutionVersion=$version" >> $env:GITHUB_ENV
 
       - name: Get Current Version (if not updating)
         if: inputs.update_build_version == false
@@ -77,7 +77,7 @@ jobs:
           & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 `
             -SolutionName "${{ matrix.solution }}" `
             -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
-            -BuildVersionChange $env:BUILD_CHANGE
+            -BuildVersionChange "$buildChange"
 
       - name: Capture Solution Version (if not updating)
         if: inputs.update_build_version == false
@@ -99,7 +99,7 @@ jobs:
           user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
           password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
           name: ${{ matrix.solution }}
-          version: ${{ env.SolutionVersion }}
+          version: "$buildChange"
 
       # Export Managed
       - uses: microsoft/powerplatform-actions/export-solution@v1
