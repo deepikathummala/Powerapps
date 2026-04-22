@@ -16,7 +16,7 @@ on:
       update_build_version:
         description: 'Update Build Version'
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:
