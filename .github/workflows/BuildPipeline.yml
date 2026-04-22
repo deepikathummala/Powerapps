@@ -34,7 +34,7 @@ jobs:
 
       - uses: microsoft/powerplatform-actions/install@v1
         with:
-          # Assumes default version; adjust if needed
+          powerplatform-cli-version: 'latest'
 
       - name: Update Solution Version (if enabled)
         if: inputs.update_build_version == true
