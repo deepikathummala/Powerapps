@@ -1,0 +1,142 @@
+name: Export Solutions
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environments:
+        description: 'Source Environments'
+        required: true
+        default: 'MPD-Dev'
+        type: string
+      solutions:
+        description: 'Solutions (JSON array, e.g., ["MPDFirearmsStabilizationCore"])'
+        required: true
+        default: '["MPDFirearmsStabilizationCore"]'
+        type: string
+      update_build_version:
+        description: 'Update Build Version'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  export:
+    runs-on: windows-latest
+    environment: ${{ inputs.source_environments }}
+    timeout-minutes: 0  # Note: GitHub has a 6-hour limit for jobs
+    strategy:
+      matrix:
+        solution: ${{ fromJson(inputs.solutions) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: microsoft/powerplatform-actions/install@v1
+        with:
+          # Assumes default version; adjust if needed
+
+      - name: Update Solution Version (if enabled)
+        if: inputs.update_build_version == true
+        run: |
+          & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 -SolutionName ${{ matrix.solution }} -ConnectionString "${{ secrets.CONNECTION_STRING }}" -BuildVersionChange ${{ inputs.update_build_version }}
+        shell: pwsh
+
+      - name: Capture Solution Version (if update enabled)
+        if: inputs.update_build_version == true
+        run: |
+          $version = Get-Content 'version.txt'
+          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Debug Output of SolutionVersion (if update enabled)
+        if: inputs.update_build_version == true
+        run: |
+          Write-Host "SolutionVersion: $env:SolutionVersion"
+        shell: pwsh
+
+      - name: Get Current Version (if not updating)
+        if: inputs.update_build_version == false
+        run: |
+          & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 -SolutionName ${{ matrix.solution }} -ConnectionString "${{ secrets.CONNECTION_STRING }}" -BuildVersionChange ${{ inputs.update_build_version }}
+        shell: pwsh
+
+      - name: Capture Solution Version (if not updating)
+        if: inputs.update_build_version == false
+        run: |
+          $version = Get-Content 'currentversion.txt'
+          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Debug Output of SolutionVersion (if not updating)
+        if: inputs.update_build_version == false
+        run: |
+          Write-Host "SolutionVersion: $env:SolutionVersion"
+        shell: pwsh
+
+      - uses: microsoft/powerplatform-actions/set-solution-version@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}  # Assumes secret for environment URL
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          solution-name: ${{ matrix.solution }}
+          solution-version: ${{ env.SolutionVersion }}
+
+      - uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          solution-name: ${{ matrix.solution }}
+          solution-output-file: ${{ github.workspace }}/Solutions/Managed/${{ matrix.solution }}.zip
+          managed: true
+          async: true
+          max-async-wait-time: 60
+
+      - uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          solution-name: ${{ matrix.solution }}
+          solution-output-file: ${{ github.workspace }}/Solutions/Unmanaged/${{ matrix.solution }}.zip
+          async: true
+          max-async-wait-time: 60
+
+      - uses: microsoft/powerplatform-actions/checker@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          files-to-analyze: ${{ github.workspace }}/Solutions/Unmanaged/${{ matrix.solution }}.zip
+          rule-set: '0ad12346-e108-40b8-a956-9a8f95ea18c9'
+          output-directory: ${{ github.workspace }}/CheckerResults  # Assumes saving results
+
+      - uses: microsoft/powerplatform-actions/unpack-solution@v1
+        with:
+          solution-file: ${{ github.workspace }}/Solutions/Managed/${{ matrix.solution }}.zip
+          solution-folder: ${{ github.workspace }}/mpd-crm-sourcecode/Managed/${{ matrix.solution }}
+          solution-type: Managed
+
+      - uses: microsoft/powerplatform-actions/unpack-solution@v1
+        with:
+          solution-file: ${{ github.workspace }}/Solutions/Unmanaged/${{ matrix.solution }}.zip
+          solution-folder: ${{ github.workspace }}/mpd-crm-sourcecode/Unmanaged/${{ matrix.solution }}
+          solution-type: Unmanaged
+
+      # Copy files step was disabled in original, so omitted
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git checkout -B "${{ github.ref_name }}"
+          git add .
+          git commit -m "Export Power Platform solutions from pipeline" || echo "Nothing to commit"
+          git push origin "${{ github.ref_name }}"
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drop
+          path: ${{ github.workspace }}/Solutions/
