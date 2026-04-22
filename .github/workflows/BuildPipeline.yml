@@ -6,7 +6,7 @@ on:
       source_environments:
         description: 'Source Environments'
         required: true
-        default: 'MPD-Dev'
+        default: 'Dev'
         type: string
       solutions:
         description: 'Solutions (JSON array, e.g., ["MPDFirearmsStabilizationCore"])'
