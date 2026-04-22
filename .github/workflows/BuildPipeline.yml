@@ -32,9 +32,9 @@ jobs:
         with:
           persist-credentials: true
 
-      - uses: microsoft/powerplatform-actions/install@v1
-        with:
-          powerplatform-cli-version: 'latest'
+      # - uses: microsoft/powerplatform-actions/install@v1
+      #   with:
+      #     powerplatform-cli-version: 'latest'
 
       - name: Update Solution Version (if enabled)
         if: inputs.update_build_version == true
