@@ -103,7 +103,7 @@ jobs:
           async: true
           max-async-wait-time: 60
 
-      - uses: microsoft/powerplatform-actions/checker@v1
+      - uses: microsoft/powerplatform-actions/check-solutio@v1
         with:
           environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
           user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
