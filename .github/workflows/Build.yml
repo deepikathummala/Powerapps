@@ -1,0 +1,169 @@
+name: Export Solutions
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environments:
+        description: 'Source Environments'
+        required: true
+        default: 'Dev'
+        type: string
+      solutions:
+        description: 'Solutions (JSON array, e.g., ["MPDFirearmsStabilizationCore"])'
+        required: true
+        default: '["Sprint1_Solution_Shailaja"]'
+        type: string
+      update_build_version:
+        description: 'Update Build Version'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  export-solution:
+    runs-on: windows-latest
+    environment: ${{ inputs.source_environments }}
+    timeout-minutes: 0
+    strategy:
+      matrix:
+        solution: ${{ fromJson(inputs.solutions) }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      # Install Power Platform tools first (recommended)
+      - uses: microsoft/powerplatform-actions/actions-install@v1
+        # recommended by docs before other Power Platform actions [2](https://learn.microsoft.com/en-us/power-platform/alm/devops-github-available-actions)[3](https://www.office.com/search?q=%3cPerson%3eKaran+Gureja%3c%2fPerson%3e&EntityRepresentationId=95bc8d4e-d8c9-4207-8881-778bc186c7b3)
+
+      - name: Ensure output folders exist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\Solutions\Managed" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\Solutions\Unmanaged" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\CheckerResults" | Out-Null
+
+      - name: Set boolean for scripts
+        id: bool
+        shell: pwsh
+        run: |
+          $buildChange = [System.Convert]::ToBoolean("${{ inputs.update_build_version }}")
+          "BUILD_CHANGE=$buildChange" >> $env:GITHUB_ENV
+
+      - name: Update Solution Version (if enabled)
+        if: inputs.update_build_version == true
+        shell: pwsh
+        run: |
+          & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 `
+            -SolutionName "${{ matrix.solution }}" `
+            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+            -BuildVersionChange $env:BUILD_CHANGE
+
+      - name: Capture Solution Version (if update enabled)
+        if: inputs.update_build_version == true
+        shell: pwsh
+        run: |
+          $version = Get-Content 'version.txt'
+          "SolutionVersion=$version" >> $env:GITHUB_ENV
+
+      - name: Get Current Version (if not updating)
+        if: inputs.update_build_version == false
+        shell: pwsh
+        run: |
+          & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 `
+            -SolutionName "${{ matrix.solution }}" `
+            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+            -BuildVersionChange $env:BUILD_CHANGE
+
+      - name: Capture Solution Version (if not updating)
+        if: inputs.update_build_version == false
+        shell: pwsh
+        run: |
+          $version = Get-Content 'currentversion.txt'
+          "SolutionVersion=$version" >> $env:GITHUB_ENV
+
+      - name: Debug Output of SolutionVersion
+        shell: pwsh
+        run: |
+          Write-Host "SolutionVersion: $env:SolutionVersion"
+
+      # Set version in Dataverse (online) BEFORE export
+      # NOTE: inputs are 'name' and 'version' for this action [1](https://github.com/microsoft/powerplatform-actions/blob/main/set-online-solution-version/action.yml)
+      - uses: microsoft/powerplatform-actions/set-online-solution-version@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          name: ${{ matrix.solution }}
+          version: ${{ env.SolutionVersion }}
+
+      # Export Managed
+      - uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          solution-name: ${{ matrix.solution }}
+          solution-output-file: ${{ github.workspace }}\Solutions\Managed\${{ matrix.solution }}.zip
+          managed: true
+          async: true
+          max-async-wait-time: 60
+        # export-solution inputs and managed/async behavior are documented [6](https://github.com/microsoft/powerplatform-actions/blob/main/export-solution/action.yml)[7](https://deepwiki.com/microsoft/powerplatform-cli-wrapper/4.1.2-export-solution)
+
+      # Export Unmanaged (managed defaults to false)
+      - uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          solution-name: ${{ matrix.solution }}
+          solution-output-file: ${{ github.workspace }}\Solutions\Unmanaged\${{ matrix.solution }}.zip
+          async: true
+          max-async-wait-time: 60
+        
+
+      # Solution Checker (use documented 'path' + artifact name) [3](https://www.office.com/search?q=%3cPerson%3eKaran+Gureja%3c%2fPerson%3e&EntityRepresentationId=95bc8d4e-d8c9-4207-8881-778bc186c7b3)
+      - uses: microsoft/powerplatform-actions/check-solution@v1
+        with:
+          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}
+          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+          path: ${{ github.workspace }}\Solutions\Unmanaged\${{ matrix.solution }}.zip
+          checker-logs-artifact-name: CheckerResults
+       
+
+      # Unpack Managed [4](https://github.com/microsoft/powerplatform-actions/blob/main/unpack-solution/action.yml)[5](https://github.com/microsoft/powerplatform-actions/blob/main/unpack-solution/action.yml)
+      - uses: microsoft/powerplatform-actions/unpack-solution@v1
+        with:
+          solution-file: ${{ github.workspace }}\Solutions\Managed\${{ matrix.solution }}.zip
+          solution-folder: ${{ github.workspace }}\mpd-crm-sourcecode\Managed\${{ matrix.solution }}
+          solution-type: Managed
+       
+
+      # Unpack Unmanaged [4](https://github.com/microsoft/powerplatform-actions/blob/main/unpack-solution/action.yml)[5](https://github.com/microsoft/powerplatform-actions/blob/main/unpack-solution/action.yml)
+      - uses: microsoft/powerplatform-actions/unpack-solution@v1
+        with:
+          solution-file: ${{ github.workspace }}\Solutions\Unmanaged\${{ matrix.solution }}.zip
+          solution-folder: ${{ github.workspace }}\mpd-crm-sourcecode\Unmanaged\${{ matrix.solution }}
+          solution-type: Unmanaged
+       
+
+      - name: Commit and push changes
+        shell: pwsh
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git checkout -B "${{ github.ref_name }}"
+          git add .
+          git commit -m "Export Power Platform solutions from pipeline" || echo "Nothing to commit"
+          git push origin "${{ github.ref_name }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drop
+          path: ${{ github.workspace }}\Solutions\
+``
