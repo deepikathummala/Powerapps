@@ -8,12 +8,12 @@ param(
     [bool]$BuildVersionChange
 )
 
-# Load the necessary module if it's not already loaded
-$Module = Get-InstalledModule -Name "Microsoft.Xrm.Data.Powershell" -ErrorAction SilentlyContinue
-if ($Module -eq $null) {
-    Write-Host "Module is not installed, installing 'Microsoft.Xrm.Data.Powershell'...";
-    Install-Module -Name Microsoft.Xrm.Data.Powershell -Force -Scope CurrentUser -Verbose
-}
+# # Load the necessary module if it's not already loaded
+# $Module = Get-InstalledModule -Name "Microsoft.Xrm.Data.Powershell" -ErrorAction SilentlyContinue
+# if ($Module -eq $null) {
+#     Write-Host "Module is not installed, installing 'Microsoft.Xrm.Data.Powershell'...";
+#     Install-Module -Name Microsoft.Xrm.Data.Powershell -Force -Scope CurrentUser -Verbose
+# }
 
 # Create the service connection to Dynamics 365
 $ServiceConn = Get-CrmConnection -ConnectionString $ConnectionString
