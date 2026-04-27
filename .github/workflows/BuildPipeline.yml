@@ -13,11 +13,16 @@ on:
         required: true
         default: '["Sprint1_Solution_Shailaja"]'
         type: string
+      
       update_build_version:
         description: 'Update Build Version'
         required: true
-        default: true
-        type: boolean
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
 
 jobs:
   export-solution:
@@ -32,47 +37,29 @@ jobs:
         with:
           persist-credentials: true
 
-      # - uses: microsoft/powerplatform-actions/install@v1
-      #   with:
-      #     powerplatform-cli-version: 'latest'
-
-      - name: Update Solution Version (if enabled)
-        if: inputs.update_build_version == true
+      - name: Update Solution Version
+        if: inputs.update_build_version == 'true'
         run: |
-          & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 -SolutionName ${{ matrix.solution }} -ConnectionString "${{ secrets.CONNECTION_STRING }}" -BuildVersionChange ${{ inputs.update_build_version }}
+          & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 `
+            -SolutionName ${{ matrix.solution }} `
+            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+            -BuildVersionChange $true
+      
+          $version = Get-Content 'version.txt'
+          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
         shell: pwsh
-
-      # - name: Capture Solution Version (if update enabled)
-      #   if: inputs.update_build_version == true
-      #   run: |
-      #     $version = Get-Content 'version.txt'
-      #     echo "SolutionVersion=$version" >> $env:GITHUB_ENV
-      #   shell: pwsh
-
-      # - name: Debug Output of SolutionVersion (if update enabled)
-      #   if: inputs.update_build_version == true
-      #   run: |
-      #     Write-Host "SolutionVersion: $env:SolutionVersion"
-      #   shell: pwsh
-
-      - name: Get Current Version (if not updating)
-        if: inputs.update_build_version == false
+      
+      - name: Get Current Version
+        if: inputs.update_build_version == 'false'
         run: |
-          & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 -SolutionName ${{ matrix.solution }} -ConnectionString "${{ secrets.CONNECTION_STRING }}" -BuildVersionChange ${{ inputs.update_build_version }}
+          & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 `
+            -SolutionName ${{ matrix.solution }} `
+            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+            -BuildVersionChange $false
+      
+          $version = Get-Content 'currentversion.txt'
+          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
         shell: pwsh
-
-      # - name: Capture Solution Version (if not updating)
-      #   if: inputs.update_build_version == false
-      #   run: |
-      #     $version = Get-Content 'currentversion.txt'
-      #     echo "SolutionVersion=$version" >> $env:GITHUB_ENV
-      #   shell: pwsh
-
-      # - name: Debug Output of SolutionVersion (if not updating)
-      #   if: inputs.update_build_version == false
-      #   run: |
-      #     Write-Host "SolutionVersion: $env:SolutionVersion"
-      #   shell: pwsh
 
       - uses: microsoft/powerplatform-actions/set-online-solution-version@v1
         with:
@@ -80,7 +67,7 @@ jobs:
           user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
           password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
           solution-name: ${{ matrix.solution }}
-          solution-version: $env:SolutionVersion
+          solution-version: $version
 
       - uses: microsoft/powerplatform-actions/export-solution@v1
         with:
