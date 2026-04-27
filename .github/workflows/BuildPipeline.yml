@@ -36,6 +36,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
+      - name: Install Power platform tools
+        uses: microsoft/powerplatform-actions/actions-install@v1
       - name: Install Microsoft.Xrm.Data.PowerShell
         shell: pwsh
         run: |
