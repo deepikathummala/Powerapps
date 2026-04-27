@@ -41,37 +41,37 @@ jobs:
         run: |
           Install-Module Microsoft.Xrm.Data.PowerShell -Scope CurrentUser -Force -AllowClobber
 
-      - name: Update Solution Version
-        if: inputs.update_build_version == 'true'
-        run: |
-          & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 `
-            -SolutionName ${{ matrix.solution }} `
-            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
-            -BuildVersionChange $true
+      # - name: Update Solution Version
+      #   if: inputs.update_build_version == 'true'
+      #   run: |
+      #     & .\mpd-solution-pipelines\scripts\UpdateSolutionVersion.ps1 `
+      #       -SolutionName ${{ matrix.solution }} `
+      #       -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+      #       -BuildVersionChange $true
       
-          $version = Get-Content 'version.txt'
-          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
-        shell: pwsh
+      #     $version = Get-Content 'version.txt'
+      #     echo "SolutionVersion=$version" >> $env:GITHUB_ENV
+      #   shell: pwsh
       
-      - name: Get Current Version
-        if: inputs.update_build_version == 'false'
-        run: |
-          & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 `
-            -SolutionName ${{ matrix.solution }} `
-            -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
-            -BuildVersionChange $false
+      # - name: Get Current Version
+      #   if: inputs.update_build_version == 'false'
+      #   run: |
+      #     & .\mpd-solution-pipelines\scripts\CurrentVersion.ps1 `
+      #       -SolutionName ${{ matrix.solution }} `
+      #       -ConnectionString "${{ secrets.CONNECTION_STRING }}" `
+      #       -BuildVersionChange $false
       
-          $version = Get-Content 'currentversion.txt'
-          echo "SolutionVersion=$version" >> $env:GITHUB_ENV
-        shell: pwsh
+      #     $version = Get-Content 'currentversion.txt'
+      #     echo "SolutionVersion=$version" >> $env:GITHUB_ENV
+      #   shell: pwsh
 
-      - uses: microsoft/powerplatform-actions/set-online-solution-version@v1
-        with:
-          environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}  # Assumes secret for environment URL
-          user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
-          password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
-          solution-name: ${{ matrix.solution }}
-          solution-version: $version
+      # - uses: microsoft/powerplatform-actions/set-online-solution-version@v1
+      #   with:
+      #     environment-url: ${{ secrets.POWERPLATFORM_ENVIRONMENT_URL }}  # Assumes secret for environment URL
+      #     user-name: ${{ secrets.POWERPLATFORM_USER_NAME }}
+      #     password-secret: ${{ secrets.POWERPLATFORM_PASSWORD }}
+      #     solution-name: ${{ matrix.solution }}
+      #     solution-version: $version
 
       - uses: microsoft/powerplatform-actions/export-solution@v1
         with:
