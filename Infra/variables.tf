@@ -6,3 +6,6 @@ variable "location" {
   description = "Azure Region"
   type        = string
 }
+variable "create_rg_name" {
+  type = bool
+}
