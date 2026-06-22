@@ -42,13 +42,13 @@ jobs:
       # - name: Terraform Apply
       #   run: terraform apply -auto-approve -var-file=environments/dev.tfvars
       - name: Terraform Init
-        working-directory: ./infra
+        working-directory: ./Infra
         run: terraform init
       
       - name: Terraform Plan
-        working-directory: ./infra
+        working-directory: ./Infra
         run: terraform plan -var-file=environments/dev.tfvars
       
       - name: Terraform Apply
-        working-directory: ./infra
+        working-directory: ./Infra
         run: terraform apply -auto-approve -var-file=environments/dev.tfvars
