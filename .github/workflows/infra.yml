@@ -28,7 +28,7 @@ jobs:
          echo "Subscription ID exists: ${{ secrets.AZURE_SUBCRIPTION_ID != '' }}"
       - uses: azure/login@v3
         with:
-         creds: '{"clientId":"${{ secrets.AZURE_ID }}","clientSecret":"${{ secrets.AZURE_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+         creds: '{"clientId":"${{ secrets.AZURE_ID }}","clientSecret":"${{ secrets.AZURE_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
 
       - name: Terraform Init
         run: terraform init
