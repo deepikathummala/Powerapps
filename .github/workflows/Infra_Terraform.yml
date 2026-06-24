@@ -1,0 +1,102 @@
+name: Terraform
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+      resources:
+        description: "Comma-separated resource folders (network,storage,keyvault,appservice)"
+        required: true
+        default: "resourcegroup,keyvault,storageaccount"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+
+  generate-matrix:
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - name: Build Matrix
+        id: set-matrix
+        shell: bash
+        run: |
+          INPUT="${{ github.event.inputs.resources }}"
+
+          JSON=$(echo "$INPUT" | \
+          jq -R 'split(",") | map(gsub(" ";"")) | map({resource:.})')
+
+          echo "matrix=$JSON" >> $GITHUB_OUTPUT
+
+          echo "Generated Matrix:"
+          echo "$JSON"
+
+  terraform:
+    needs: generate-matrix
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+
+    defaults:
+      run:
+        working-directory: Infra/${{ matrix.resource }}
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=ikea-rg" \
+            -backend-config="storage_account_name=ikea-st" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ github.event.inputs.environment }}.tfstate"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file="../../environments/${{ github.event.inputs.environment }}.tfvars" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        run: |
+          terraform apply \
+            -auto-approve \
+            tfplan
