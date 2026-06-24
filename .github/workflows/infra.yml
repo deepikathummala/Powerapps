@@ -2,6 +2,12 @@ name: Terraform Deployment
 
 on:
   workflow_dispatch:
+   inputs:
+     resource:
+      type: choice
+      options:
+        - create_rg_name
+        - create_keyvault
 
 jobs:
   terraform:
