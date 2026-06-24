@@ -15,3 +15,7 @@ variable "tenant_id" {
 variable "rg_name" {
   type = string
 }
+variable "create_keyvault" { 
+  type    = bool
+  default = false
+ }
