@@ -5,6 +5,7 @@ location = var.location
 create_rg_name = var.create_rg_name
 }
 module "kv" {
+count = var.create_keyvault ? 1 : 0
 source = "./modules/keyvault"
 keyvault_name = var.keyvault_name
 location = var.location
