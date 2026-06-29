@@ -2,6 +2,10 @@ data "azurerm_storage_account" "st" {
   name = var.st_name
   resource_group_name = var.rg_name 
 }
+data "azurerm_service_plan" "appplan" {
+  name = var.appserviceplan_name
+  resource_group_name = var.rg_name
+}
 
 data "azurerm_application_insights" "appins" {
   name = var.appinsghts_name
