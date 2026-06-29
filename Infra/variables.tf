@@ -34,3 +34,6 @@ variable "st_name" {
 variable "create_func" {
 type =  bool
 }
+variable "appserviceplan_name" {
+  type = string
+}
