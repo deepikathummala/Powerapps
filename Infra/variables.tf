@@ -28,9 +28,6 @@ variable "func_name" {
 variable "appinsghts_name" {
   type = string 
 }
-variable "appserviceplan_name" {
-  type = string
-}
 variable "st_name" {
   type = string
 }
