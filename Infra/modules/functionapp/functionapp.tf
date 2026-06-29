@@ -12,7 +12,6 @@ data "azurerm_application_insights" "appins" {
 }
 
 resource "azurerm_windows_function_app" "functionapp" {
-  count = var.create_func ? 1 : 0
   name = var.func_name
   location = var.location
   service_plan_id = data.azurerm_service_plan.appplan.id
