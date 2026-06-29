@@ -12,48 +12,14 @@ on:
           - test
           - prod
 
-      resources:
-        description: "Comma-separated resource folders (network,storage,keyvault,appservice)"
-        required: true
-        default: "resourcegroup,keyvault,storageaccount"
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-
-  generate-matrix:
-    runs-on: ubuntu-latest
-
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-
-    steps:
-      - name: Build Matrix
-        id: set-matrix
-        shell: bash
-        run: |
-          INPUT="${{ github.event.inputs.resources }}"
-
-          JSON=$(echo "$INPUT" | \
-          jq -R 'split(",") | map(gsub(" ";"")) | map({resource:.})')
-
-          echo "matrix=$JSON" >> $GITHUB_OUTPUT
-
-          echo "Generated Matrix:"
-          echo "$JSON"
-
   terraform:
-    needs: generate-matrix
-
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-
     defaults:
       run:
         working-directory: Infra/${{ matrix.resource }}
