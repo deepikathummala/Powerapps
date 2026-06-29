@@ -35,5 +35,5 @@ variable "st_name" {
   type = string
 }
 variable "create_func" {
-type: bool
+type =  bool
 }
