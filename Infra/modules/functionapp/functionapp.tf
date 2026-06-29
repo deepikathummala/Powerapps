@@ -2,10 +2,7 @@ data "azurerm_storage_account" "st" {
   name = var.st_name
   resource_group_name = var.rg_name 
 }
-data "azurerm_service_plan" "appplan" {
-  name = var.appserviceplan_name
-  resource_group_name = var.rg_name
-}
+
 data "azurerm_application_insights" "appins" {
   name = var.appinsghts_name
   resource_group_name = var.rg_name
@@ -14,8 +11,7 @@ data "azurerm_application_insights" "appins" {
 resource "azurerm_windows_function_app" "functionapp" {
   name = var.func_name
   location = var.location
-  service_plan_id = data.azurerm_service_plan.appplan.id
-  resource_group_name = var.rg_name
+  resource_group_name = var.rg_name 
   identity {
     type = "SystemAssigned"
   }
