@@ -12,76 +12,61 @@ on:
           - test
           - prod
 
-
 permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: terraform-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
-  terraform:
+  terraform-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Infra/${{ matrix.resource }}
+        working-directory: Infra
 
     env:
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     steps:
-
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: Debug Secrets2  
-        run: |
-         echo "Client ID exists: ${{ secrets.AZURE_ID != '' }}"
-         echo "Tenant ID exists: ${{ secrets.AZURE_TENANT_ID != '' }}"
-         echo "Subscription ID exists: ${{ secrets.AZURE_SUBCRIPTION_ID != '' }}"
-      - uses: azure/login@v3
         with:
-         creds: '{"clientId":"${{ secrets.AZURE_ID }}","clientSecret":"${{ secrets.AZURE_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+          terraform_version: 1.6.0
 
+      - name: Login to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Terraform Init
+      - name: Terraform init
         run: |
           terraform init \
             -backend-config="resource_group_name=ikea-rg" \
             -backend-config="storage_account_name=ikeadevst01" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=${{ github.event.inputs.environment }}.tfstate"
+            -backend-config="container_name= tfstate" \
+            -backend-config="key=${{ secrets.TF_BACKEND_KEY }}" \
+            -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+            -reconfigure -input=false -lock-timeout=300s
 
-      - name: Terraform Validate
+      - name: Terraform validate
         run: terraform validate
 
-      # - name: Terraform Plan
-      #   run: |
-      #     terraform plan \
-      #       -var-file="environments/${{ github.event.inputs.environment }}.tfvars" \
-      #       -out=tfplan
+      - name: Terraform plan
+        run: terraform plan -var-file=environments/${{ github.event.inputs.environment }}.tfvars -out=tfplan -lock-timeout=300s
 
-      # - name: Terraform Apply
-      #   run: |
-      #     terraform apply \
-      #       -auto-approve \
-      #       -var-file=environments/dev.tfvars
-      - name: Terraform Plan
-        working-directory: ./Infra
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        run: terraform plan -var-file=environments/dev.tfvars
-      - name: Terraform Apply
-        working-directory: ./Infra
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        run: terraform apply -auto-approve -var-file=environments/dev.tfvars
+      - name: Terraform apply
+        if: github.event.inputs.environment == 'prod' || github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
