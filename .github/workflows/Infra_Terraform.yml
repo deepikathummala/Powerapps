@@ -30,7 +30,7 @@ jobs:
     env:
       ARM_CLIENT_ID: ${{ secrets.AZURE_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     steps:
@@ -47,7 +47,7 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBCRIPTION_ID }}
           client-secret: ${{ secrets.AZURE_SECRET }}
 
       - name: Terraform init
@@ -57,7 +57,7 @@ jobs:
             -backend-config="storage_account_name=ikeadevst01" \
             -backend-config="container_name= tfstate" \
             -backend-config="key=dev.tfstate" \
-            -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -backend-config="subscription_id=${{ secrets.AZURE_SUBCRIPTION_ID }}" \
             -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -reconfigure -input=false -lock-timeout=300s
 
