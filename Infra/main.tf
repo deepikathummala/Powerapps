@@ -16,6 +16,7 @@ rg_name  = var.rg_name
 module "functionapp" {
 count = var.create_func ? 1 : 0
 source = "./modules/functionapp"
+name = var.func_name
 rg_name  = var.rg_name 
 location = var.location
 appserviceplan_name = var.appserviceplan_name
