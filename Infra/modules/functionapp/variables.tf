@@ -19,3 +19,6 @@ variable "location" {
   description = "Azure Region"
   type        = string
 }
+variable "appserviceplan_name" {
+  type = string
+}
