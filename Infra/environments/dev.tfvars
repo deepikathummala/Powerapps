@@ -8,5 +8,6 @@ create_keyvault = false
 func_name = "ikea-dev-func-001"
 appinsghts_name = "ikea-dev-appi-001"
 appserviceplan_name = "ikea-dev-plan-001"
-st_name = "ikea-dev-st-001"
+st_name = "ikeadevst01"
+create_func = true
 
