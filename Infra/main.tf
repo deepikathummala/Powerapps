@@ -19,7 +19,6 @@ source = "./modules/functionapp"
 func_name = var.func_name
 rg_name  = var.rg_name 
 location = var.location
-appserviceplan_name = var.appserviceplan_name
 appinsghts_name = var.appinsghts_name
 st_name = var.st_name
 env = var.env
